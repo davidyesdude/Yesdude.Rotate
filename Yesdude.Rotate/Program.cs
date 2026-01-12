@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -67,6 +68,7 @@ namespace Yesdude.Rotate
         public ScreenRotater()
         {
             AddTrayIconPerScreen();
+            SubscribeToEvents();
         }
 
         private void AddTrayIconPerScreen()
@@ -140,9 +142,7 @@ namespace Yesdude.Rotate
             switch (rotation)
             {
                 case -1:
-                    foreach(NotifyIcon ti in trayIcons)
-                        ti.Visible = false;
-                    Application.Exit();
+                    Exit();
                     break;
                 case 0:
                     goto default;
@@ -165,11 +165,56 @@ namespace Yesdude.Rotate
 
         }
 
-        void Exit(object sender, EventArgs e)
+        public void SubscribeToEvents()
         {
-            // Hide tray icon, otherwise it will remain shown until user mouses over it
-            if (trayIcon is not null) trayIcon.Visible = false;
+            // Event for when display settings change (monitor connect/disconnect/resolution change)
+            SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
+            // This event might also fire for docking/undocking in some cases
+            SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+        }
+
+        public void UnsubscribeFromEvents()
+        {
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
+            SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        }
+
+        private void SystemEvents_DisplaySettingsChanged(object? sender, EventArgs e)
+        {
+            //only when a sceen count changes otherwise this
+            //fires when we actually rotate the screen and reloading
+            //the tray icons is not required
+            if (Display.ScreenCount != trayIcons.Count)
+            {
+                RemoveTrayIcons();
+                AddTrayIconPerScreen();
+            }
+        }
+
+        private void SystemEvents_UserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
+        {
+            if (e.Category == UserPreferenceCategory.Desktop)
+            {
+                //not sure if this is useful or needed
+            }
+        }
+
+        void RemoveTrayIcons()
+        {
+            // Hide tray icon, otherwise it may remain shown until user mouses over it
+            foreach (NotifyIcon ti in trayIcons)
+                ti.Visible = false;
+            if (trayIcon is not null) trayIcon.Visible = false;
+            // Now dispose of them
+            foreach (NotifyIcon ti in trayIcons)
+                ti.Dispose();
+        }
+
+        void Exit()
+        {
+            UnsubscribeFromEvents();
+            RemoveTrayIcons();
             Application.Exit();
         }
     }
