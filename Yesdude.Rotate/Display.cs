@@ -17,6 +17,11 @@ namespace Yesdude.Rotate
             DEGREES_CW_270 = 3
         }
 
+        public static int ScreenCount
+        {
+            get { return Screen.AllScreens.Count(); }
+        }
+
         public static bool VerifyDisplayNumber(uint DisplayNumber)
         {
             DISPLAY_DEVICE d = new DISPLAY_DEVICE();
