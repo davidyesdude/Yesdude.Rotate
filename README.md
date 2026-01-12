@@ -5,7 +5,7 @@ Date: January 9, 2026
 GitHub uses this file to display read me information for the repository.
 -->
 # Yesdude Rotate
-===
+---
 This is a simple Windows tray application for rotating screens when you have multiple monitors.
 ---
 ### Known issues.
